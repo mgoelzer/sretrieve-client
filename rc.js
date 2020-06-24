@@ -54,25 +54,11 @@ async function run() {
       transport: [TCP, WS],
       connEncryption: [NOISE],
       streamMuxer: [MPLEX],
-//      peerDiscovery: [Bootstrap]
     },
     peerId: selfNodeId,
     addresses: {
       listen: ['/ip4/0.0.0.0/tcp/'+port]
     },
-/*
-    config: {
-      peerDiscovery: {
-        autoDial: true, // Auto connect to discovered peers (limited by ConnectionManager minPeers)
-        // The `tag` property will be searched when creating the instance of your Peer Discovery service.
-        // The associated object, will be passed to the service when it is instantiated.
-        [Bootstrap.tag]: {
-          enabled: true,
-          list: bootstrapMultiaddrs // provide array of multiaddrs
-        }
-      }
-    }
-*/
   })
 
   // Log a message when we receive a connection
@@ -80,10 +66,13 @@ async function run() {
     console.log('received dial to me from:', connection.remotePeer.toB58String())
   })
 
-  // Handle connections to the protocol
+  //
+  // Handle connections on the protocol /fil-retrieval/0.0.1 
+  //
   await selfNode.handle( strProtocolName, ({ stream }) => //pipe(stream.source, stream.sink) 
     function(){
       (async () => {
+
         function streamToString (stream) {
           const chunks = []
           return new Promise((resolve, reject) => {
@@ -92,12 +81,10 @@ async function run() {
             stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
           })
         }
+
         var s = await streamToString(stream.source)
-        //return s
-      })//.then(data => {
-        //console.log(data)
-        //console.log("Received payment vouchers:  "+data)
-      //})
+        //want to `console.log(s)` here, but need to use .then() on the async function
+      })
       
       // Send the CID data per /fil-retrievel/0.0.1 protocol
       pipe([strRetrievedCIDBytes],stream.sink)
@@ -123,7 +110,7 @@ async function run() {
     const { stream } = await selfNode.dialProtocol(otherMultiaddr, strProtocolName)
     console.log('Dialed with protocol: '+strProtocolName)
     pipe(
-      // Source
+      // Source (send payment vouchers, expecting to receive bytes of your Data CID)
       ['<payment voucher 1> ... <payment voucher 2> ...'], 
       stream,
       // Sink
@@ -147,4 +134,3 @@ async function run() {
 }
 
 run()
-

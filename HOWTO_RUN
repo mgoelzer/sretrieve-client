@@ -1,0 +1,7 @@
+In first terminal:   
+	node rc.js -p 10333
+	(copy listening multiaddr)
+
+In second terminal:  
+	node rc.js -p 10334 -m (paste multiaddr from first terminal)
+

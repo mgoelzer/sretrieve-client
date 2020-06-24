@@ -1,0 +1,25 @@
+{
+  "name": "retrieval-client-js",
+  "version": "0.0.1",
+  "description": "A p2p network of Filecoin content retrievers",
+  "main": "rc.js",
+  "dependencies": {
+    "defaults-deep": "^0.2.4",
+    "it-pipe": "^1.1.0",
+    "libp2p": "^0.28.3",
+    "libp2p-gossipsub": "^0.4.5",
+    "libp2p-mplex": "^0.9.5",
+    "libp2p-noise": "^1.1.2",
+    "libp2p-tcp": "^0.14.5",
+    "libp2p-websockets": "^0.13.6",
+    "multiaddr": "^7.4.3",
+    "peer-info": "^0.17.5",
+    "yargs": "^13.2.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mike Goelzer",
+  "license": "MIT"
+}

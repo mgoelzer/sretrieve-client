@@ -13,3 +13,14 @@ What doesn't work:
 * The protocol `/fil-retrieve/0.0.1` is not well defined yet.  Needs to use the FIL payment channels flow.
 * Not able to run in browser right now due to CLI dependency, but this is an easy fix
 
+### Install
+
+1. Clone this repo, and `cd` into it
+
+2. `npm install`
+
+3.  node rc.js --help     # Informational
+
+4.  node rc.js -p 10333
+
+5.  (follow the instructions in HOWTO_RUN to bring up additional nodes)

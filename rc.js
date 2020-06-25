@@ -12,9 +12,6 @@ const pipe = require('it-pipe')
 const yargs = require("yargs")
 const console = require('console')
 
-const strProtocolName = '/echo/1.0.0'
-const strRetrievedCIDBytes = "TB9iLgemJO8aWrnGJNwmT7eeC2cYU1cUAeKmhVBIrKLS24TuL1StGEVRYYyZg3XX5UK6xS8UaQG2LEcxEkBpYWUlZ6UQ=="
-const strPaymentVouchers = "<payment voucher>"
 //
 // Command line arguments
 //
@@ -39,6 +36,17 @@ const gsubRegistrar = {
   unregister: (id) => {
   }
 }
+
+//
+// Constant strings
+//
+const strProtocolName = '/fil-retrieve/0.0.1'
+
+//
+// Dummy strings for retrieval protocol
+//
+const strRetrievedCIDBytes = "TB9iLgemJO8aWrnGJNwmT7eeC2cYU1cUAeKmhVBIrKLS24TuL1StGEVRYYyZg3XX5UK6xS8UaQG2LEcxEkBpYWUlZ6UQ=="
+const strPaymentVouchers = "<payment voucher>"
 
 //
 // Main program

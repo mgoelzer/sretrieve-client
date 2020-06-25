@@ -11,7 +11,7 @@ What doesn't work:
 * Gossipsub - investigating this...
 * Not yet gossiping around the CIDs
 * The protocol `/fil-retrieve/0.0.1` is not well defined yet.  Needs to use the FIL payment channels flow.
-* Not able to run in browser right now due to CLI dependency, but this is an easy fix
+* CLI node app for now, but this could be browserified in the future
 
 ### Install
 
@@ -24,3 +24,4 @@ What doesn't work:
 4.  node rc.js -p 10333
 
 5.  (follow the instructions in HOWTO_RUN to bring up additional nodes)
+

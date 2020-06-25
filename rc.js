@@ -12,6 +12,7 @@ const pipe = require('it-pipe')
 const yargs = require("yargs")
 const console = require('console')
 const chalk = require('chalk');
+const { Math, clearInterval } = require('ipfs-utils/src/globalthis')
 
 //
 // Command line arguments
@@ -26,17 +27,6 @@ const options = yargs
 // Setup for gossipsub
 //
 const strTopic = 'fil-retrieve'
-const gsubRegistrar = {
-  handle: (multicodecs, handle) => {
-    // register multicodec to libp2p
-    // handle function is called everytime a remote peer opens a stream to the peer.
-  },
-  register: (multicodecs, handlers) => {
-    // handlers will be used to notify pubsub of peer connection establishment or closing
-  },
-  unregister: (id) => {
-  }
-}
 
 //
 // Constant strings
@@ -63,6 +53,7 @@ async function run() {
       transport: [TCP, WS],
       connEncryption: [NOISE],
       streamMuxer: [MPLEX],
+      pubsub: Gossipsub,
     },
     peerId: selfNodeId,
     addresses: {
@@ -112,11 +103,6 @@ async function run() {
     console.log(ma.toString() + '/p2p/' + selfNodeId.toB58String())
   })
 
-  // Gossipsub initialization
-  const gsubOptions = { fallbackToFloodsub:false }
-  const gsub = new Gossipsub(selfNodeId, gsubRegistrar, gsubOptions)
-  await gsub.start()
-
   // Dial another peer if a multiaddr was specified
   if (otherMultiaddr!=undefined) {
     console.log('Dialing other peer:', otherMultiaddr)
@@ -137,12 +123,12 @@ async function run() {
     console.log("Not dialing other peer: none specified")
   }
 
-  // Publish to gossip channel
-  gsub.on(strTopic, (data) => {
-    console.log('gossip message: ' + data)
+  selfNode.pubsub.subscribe(strTopic, (message) => {
+    console.log(chalk.redBright("Pubsub msg recv'd:  "+message.data.toString('utf8', 0, message.data.length)))
   })
-  gsub.subscribe(strTopic)
-  gsub.publish(strTopic, new Buffer.from('hello'))
+  await selfNode.pubsub.publish(strTopic, "Here I send a pubsub")
+  let timerId = setInterval(()=>
+    {selfNode.pubsub.publish(strTopic, "Message!")}, 5000)
 
   // Hook connect and disconnect events from connection manager 
   // to keep track of connected peers
@@ -164,6 +150,18 @@ async function run() {
     })
   }
 
+  // Wait for commands from the user
+  process.stdin.on('data', async (message) => {
+    // Strip newline and process
+    const command = message.slice(0, -1)
+
+    if (command.toLowerCase()=="quit" || command=="q" || command=="Q") {
+      // Time to cleanup
+      clearInterval(timerId)
+      exit()
+    }
+  })
+
 }
 
 run()
@@ -174,8 +172,10 @@ function listPeers(selfNode, strLabel) {
   selfNode.peerStore.peers.forEach((peer) => {
     console.log('[' + strLabel + '] Peerbook:            ' + peer.id.toB58String())
     if (selfNode.peerStore.protoBook.data.size!=0) {
-      selfNode.peerStore.protoBook.data.values().forEach((peerSet) => {
-        console.log('[' + strLabel + '] x=' + peerSet)
+      selfNode.peerStore.protoBook.data.forEach((peerSet) => {
+        peerSet.forEach((p)=>{
+          console.log('[' + strLabel + '] ' + p)
+        })
         //const protocolsSetForPeer = selfNode.peerStore.protoBook.data[peerId]
         //for (let proto in protocolsSetForPeer) {
         //  console.log('[' + strLabel + ']     supports:  ' + proto.toString())

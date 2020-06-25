@@ -11,6 +11,7 @@ const MPLEX = require('libp2p-mplex')
 const pipe = require('it-pipe')
 const yargs = require("yargs")
 const console = require('console')
+const chalk = require('chalk');
 
 //
 // Command line arguments
@@ -68,6 +69,10 @@ async function run() {
       listen: ['/ip4/0.0.0.0/tcp/'+port]
     },
   })
+
+  // Updated by connect/disconnect notifiers
+  var connectedPeers = new Set()
+  hookPeerConnectDisconnectEvents(connectedPeers)
 
   // Log a message when we receive a connection
   selfNode.connectionManager.on('peer:connect', (connection) => {
@@ -139,6 +144,43 @@ async function run() {
   gsub.subscribe(strTopic)
   gsub.publish(strTopic, new Buffer.from('hello'))
 
+  // Hook connect and disconnect events from connection manager 
+  // to keep track of connected peers
+  function hookPeerConnectDisconnectEvents(connectedPeers) {
+    selfNode.connectionManager.on('peer:connect', (connection) => {
+      var remotePeerBase85Id = connection.remotePeer.toB58String()
+      if (!connectedPeers.has(remotePeerBase85Id)) {
+        connectedPeers.add(remotePeerBase85Id)
+        console.log( chalk.green('Howdy! ' + '|' + ` ${remotePeerBase85Id} | ` + ` ${connectedPeers.size} connected`) )
+        listPeers(selfNode, '^^^^')
+      }
+    })
+    selfNode.connectionManager.on('peer:disconnect', (connection) => {
+      var remotePeerBase85Id = connection.remotePeer.toB58String()
+      if (connectedPeers.delete(remotePeerBase85Id)) {
+        console.log(chalk.blueBright('Byebye!' + ` | ${remotePeerBase85Id}` + ' | ' + `${connectedPeers.size} connected`))
+        listPeers(selfNode, '^^^^')
+      }
+    })
+  }
+
 }
 
 run()
+
+function listPeers(selfNode, strLabel) {
+  const peersInPeerStore = selfNode.peerStore.peers.size
+  console.log('[' + strLabel + '] Peers in Peerstore:  ' + peersInPeerStore.toString())
+  selfNode.peerStore.peers.forEach((peer) => {
+    console.log('[' + strLabel + '] Peerbook:            ' + peer.id.toB58String())
+    if (selfNode.peerStore.protoBook.data.size!=0) {
+      selfNode.peerStore.protoBook.data.values().forEach((peerSet) => {
+        console.log('[' + strLabel + '] x=' + peerSet)
+        //const protocolsSetForPeer = selfNode.peerStore.protoBook.data[peerId]
+        //for (let proto in protocolsSetForPeer) {
+        //  console.log('[' + strLabel + ']     supports:  ' + proto.toString())
+      })
+    }
+  })
+}
+

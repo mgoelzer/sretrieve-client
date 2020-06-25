@@ -3,25 +3,26 @@
 This is _proof of concept_ code, thrown together quickly to explore ideas.
 
 What works:
-* Brings up two or more identical nodes
-* Each node listens on a port and prints its multiaddr.
-* Any node can connect to any other node by providing a peer's address with `-m <multiaddr to dial>`
+* Bring up two or more identical nodes
+* Each has a multiaddr and a port it's listening on
+* Any other node can join the network by connecting to you at your multiaddr
 
 What doesn't work:
-* Gossipsub - investigating this...
 * Not yet gossiping around the CIDs
 * The protocol `/fil-retrieve/0.0.1` is not well defined yet.  Needs to use the FIL payment channels flow.
 * CLI node app for now, but this could be browserified in the future
 
 ### Install
 
-1. Clone this repo, and `cd` into it
+0. Install Node
 
-2. `npm install`
+1. Clone this repo
 
-3.  node rc.js --help     # Informational
+2. `$ npm install`
 
-4.  node rc.js -p 10333
+3.  `node rc.js -p 10333` to start the first instance of the app
 
-5.  (follow the instructions in HOWTO_RUN to bring up additional nodes)
+4.  `$ node rc.js --help` for help
+
+5.  (see instructions in HOWTO_RUN to bring up additional nodes and connect them together)
 

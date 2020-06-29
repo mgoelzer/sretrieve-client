@@ -1,6 +1,8 @@
-0. npm install
+0.  git clone https://github.com/mgoelzer/retrieval-cllient-js-poc && cd retrieval-cllient-js-poc
 
-1. Create a "miner directory" for each node like this:
+1.  npm install
+
+0. (This step is already done for you if you clone the repo.) Create a "miner directory" for each node like this:
     miner1
     \ 
      +----- config.toml
@@ -9,16 +11,14 @@
              +----- <CID 1>
              +----- <CID 2>
 
-The files `CID 1` and `CID 2` should be actual Payload CIDs (aka,
-data CIDs or File CIDs), i.e., files named like this:
-bafkki48dk2001mcdqblhp6k6k3lhk0s00saa6d3jk2lkvipqf9dd00dlck
-(file name is the CID, no extension)
+The files `CID 1` and `CID 2` represent files named after their actual
+Payload CIDs (aka, data CIDs or File CIDs) with no extension.
 
-2. In first terminal:   
+3. In one terminal:   
 	node rc.js -d ./miner1 -p 10333
 	(copy listening multiaddr)
 
-3. In second terminal:  
+4. In a second terminal:  
 	node rc.js -d ./miner2 -p 10334 \
 		-m (paste multiaddr from first terminal)
 		-r bafkki48dk2001mcdqblhp6k6k3lhk0s00saa6d3jk2lkvipqf9dd00dlck

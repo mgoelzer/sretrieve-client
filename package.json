@@ -6,6 +6,7 @@
   "dependencies": {
     "chalk": "^4.1.0",
     "defaults-deep": "^0.2.4",
+    "exit": "^0.1.2",
     "it-pipe": "^1.1.0",
     "libp2p": "^0.28.3",
     "libp2p-gossipsub": "^0.4.5",

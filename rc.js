@@ -138,23 +138,8 @@ async function run() {
   // Dial another peer if a multiaddr was specified
   //
   if (otherMultiaddr!=undefined) {
-    // DELETE FIXME:  this is a fake use of the /fil-retrieve/0.0.1/ protocol just to do
-    // DELETE the dial to the other peer.  Replace with a normal dial.
     console.log('Dialing peer:', otherMultiaddr)
-    // DELETE const { stream } = await selfNode.dialProtocol(otherMultiaddr, strProtocolName)
     await selfNode.dial(otherMultiaddr)
-    // DELETE console.log('Dialed with protocol: '+strProtocolName)
-    /* DELETE pipe(
-    DELETE  // Source (send payment vouchers, expecting to receive bytes of your Data CID)
-    DELETE  ['<payment voucher 1> ... <payment voucher 2> ...'], 
-    DELETE  stream,
-    DELETE  // Sink
-    DELETE  async function (source) {
-    DELETE    for await (const data of source) {
-    DELETE      console.log('received:', data.toString())
-    DELETE    }
-    DELETE  }
-    DELETE )*/
   } else {
     console.log("Not dialing other peer: none specified")
   }
@@ -230,6 +215,7 @@ async function run() {
 
       //
       // Handle all other messages
+      //
       } else if (obj && obj['messageType']) {
         console.log(chalk.redBright('gossip> ')+"Don't understand message type '"+obj['messageType']+"', ignoring")
       }

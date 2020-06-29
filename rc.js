@@ -13,6 +13,20 @@ const yargs = require("yargs")
 const console = require('console')
 const chalk = require('chalk');
 const { Math, clearInterval } = require('ipfs-utils/src/globalthis')
+const Configuraton = require('./configuration.js')
+const LocalCids = require('./local-cids.js')
+
+// TODO:
+// 0.  Actually gossip and reply to requested cids
+// 1.  Daemon or REPL?  Do one of them
+// 2.  Provide an interface to the cid store in dataDir
+// 3.  Add a class for the custom protocol
+// 4.  Implement the custom protocol to do retrieval from an other instance 
+// of this app (payment channels, vouchers and on-chain redepemption, etc)
+// 5.  How are we handling wallets here?  Both for buying content and for getting paid
+// 6.  Get rid of all the console.log() calls
+// 7.  Make the js browser friendly by hiding all the parts that rely on disk files
+
 
 //
 // Command line arguments
@@ -21,6 +35,8 @@ const options = yargs
  .usage("Usage: -m <other peer multiaddr>")
  .option("m", { alias: "multiaddr", describe: "Multiaddr of another peer to dial", type: "string", demandOption: false })
  .option("p", { alias: "port", describe: "Port to listen on", type: "string", demandOption: true })
+ .option("d", { alias: "directory", describe: "Data+config directory for this node", type: "string", demandOption: true }) 
+ .option("r", { alias: "retrieve_cid", describe: "CID you wish to retrieve", type: "string", demandOption: false }) 
  .argv
 
 //
@@ -43,6 +59,19 @@ const strPaymentVouchers = "<payment voucher>"
 // Main program
 //
 async function run() {
+  var config = new Configuraton(options.directory)
+
+  /*
+  //Example code for querying local CID cache:
+  var localCids = new LocalCids(config)
+  var localCid = localCids.get("bafkki48dk2001mcdqblhp6k6k3lhk0s00saa6d3jk2lkvipqf9dd00dlck")
+  if (localCid != undefined) {
+    console.log("localCid[cid]="+localCid['cidStr'])
+    console.log("localCid[pricePerByte]="+localCid['pricePerByte'])
+  }
+  exit()
+  */
+
   const port = options.port
   const otherMultiaddr = options.multiaddr
 
@@ -128,7 +157,7 @@ async function run() {
   })
   await selfNode.pubsub.publish(strTopic, "Here I send a pubsub")
   let timerId = setInterval(()=>
-    {selfNode.pubsub.publish(strTopic, "Message!")}, 5000)
+    {selfNode.pubsub.publish(strTopic, "Message from "+selfNodeId.toB58String())}, 5000)
 
   // Hook connect and disconnect events from connection manager 
   // to keep track of connected peers

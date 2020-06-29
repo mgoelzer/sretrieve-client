@@ -15,8 +15,8 @@
     "libp2p-websockets": "^0.13.6",
     "multiaddr": "^7.4.3",
     "peer-info": "^0.17.5",
-    "yargs": "^13.2.4",
-    "chalk": "^4.1.0"
+    "toml": "^3.0.0",
+    "yargs": "^13.2.4"
   },
   "devDependencies": {},
   "scripts": {

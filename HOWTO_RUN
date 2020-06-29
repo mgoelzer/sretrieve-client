@@ -1,7 +1,29 @@
-In first terminal:   
-	node rc.js -p 10333
+0. npm install
+
+1. Create a "miner directory" for each node like this:
+    miner1
+    \ 
+     +----- config.toml
+     +----- data
+            \
+             +----- <CID 1>
+             +----- <CID 2>
+
+The files `CID 1` and `CID 2` should be actual Payload CIDs (aka,
+data CIDs or File CIDs), i.e., files named like this:
+bafkki48dk2001mcdqblhp6k6k3lhk0s00saa6d3jk2lkvipqf9dd00dlck
+(file name is the CID, no extension)
+
+2. In first terminal:   
+	node rc.js -d ./miner1 -p 10333
 	(copy listening multiaddr)
 
-In second terminal:  
-	node rc.js -p 10334 -m (paste multiaddr from first terminal)
+3. In second terminal:  
+	node rc.js -d ./miner2 -p 10334 \
+		-m (paste multiaddr from first terminal)
+		-r bafkki48dk2001mcdqblhp6k6k3lhk0s00saa6d3jk2lkvipqf9dd00dlck
+
+This instructs the second miner to connect to the first (-m) and retrieve 
+(-r) the CID bafkki48dk2001mcdqblhp6k6k3lhk0s00saa6d3jk2lkvipqf9dd00dlck 
+from the retrieval network.
 

@@ -1,0 +1,24 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+    // This launch configuration is for debugging.  First, start a node from a
+    // terminal with `node rc.js -d ./miner1 -p 10333` and copy its multiaddr.
+    // Paste it after '-m' below, then start debugging.
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch second instance",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/rc.js",
+            "args": [
+                "-p" , "10334",
+                // Multiaddr must be changed on each run to match miner1's multiaddr
+                "-m", "/ip4/127.0.0.1/tcp/10333/p2p/QmZ1Ua39GdsJ8fkjPEBVRRkPgZDXJZSgwSewYuNC4cwzvA",
+                "-d", "./miner2",
+                "-r", "bafkki48dk2001mcdqblhp6k6k3lhk0s00saa6d3jk2lkvipqf9dd00dlck"],
+            "outFiles": ["${workspaceFolder}/**/*.js"]
+        }
+    ]
+}

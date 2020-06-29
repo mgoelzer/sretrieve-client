@@ -98,7 +98,7 @@ async function run() {
   })
 
   //
-  // Handle connections on the protocol /fil-retrieval/0.0.1 
+  // Stream handler for protocol /fil-retrieval/0.0.1
   //
   await selfNode.handle( strProtocolName, ({ stream }) => //pipe(stream.source, stream.sink) 
     function(){

@@ -15,22 +15,14 @@ const chalk = require('chalk');
 const { Math, clearInterval } = require('ipfs-utils/src/globalthis')
 const Configuraton = require('./configuration.js')
 const LocalCids = require('./local-cids.js')
-const exit = require('exit')
 const { option } = require('yargs')
 
 // TODO:
-// 0.  Break the custom protcol out to its own file
-// 1.  Make "-r" work: 
-//	(a) actually gossip requested cids
-//	(b) reply to gossips when you have them by opening a custom
-//		protocol stream
-// 2.  Provide an interface to the cid store in dataDir
-// 3.  Add a class for the custom protocol
-// 4.  Implement the custom protocol to do retrieval from an other instance 
-// of this app (payment channels, vouchers and on-chain redepemption, etc)
-// 5.  How are we handling wallets here?  Both for buying content and for getting paid
-// 6.  Get rid of all the console.log() calls
-// 7.  Make the js browser friendly by hiding all the parts that rely on disk files
+// 1.  Implement the custom protocol to do retrieval from an other instance 
+// of this app per https://docs.google.com/document/d/1ye0C7_kdnDCfcV8KsQCRafCDvrjRkiilqW9NlXF3M7Q/edit#bookmark=id.z4n0gdjgl8pk
+// 2.  Add a wallet address + private key to config
+// 3.  Replace console.log() calls with better logging
+// 4.  Move into the browser w/ browser extention to handle disk file read/write
 
 
 //
@@ -52,13 +44,12 @@ const strTopic = 'fil-retrieve'
 //
 // Constant strings
 //
-const strProtocolName = '/fil-retrieve/0.0.1'
+const strProtocolName = '/fil-retrieve/0.1.0'
 
 //
 // Dummy strings for retrieval protocol
 //
 const strRetrievedCIDBytes = "...fake data......fake data......fake data......fake data......fake data......fake data......fake data..."
-const strPaymentVouchers = "<payment voucher>"
 
 //
 // Main program
@@ -98,29 +89,25 @@ async function run() {
   })
 
   //
-  // Stream handler for protocol /fil-retrieval/0.0.1
+  // Stream handler for protocol /fil-retrieval/0.1.0
   //
-  await selfNode.handle( strProtocolName, ({ stream }) => //pipe(stream.source, stream.sink) 
-    function(){
-      (async () => {
-
-        function streamToString (stream) {
-          const chunks = []
-          return new Promise((resolve, reject) => {
-            stream.on('data', chunk => chunks.push(chunk))
-            stream.on('error', reject)
-            stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
-          })
+  async function filRetrieveProtocolHandler ({ connection, stream }) {
+    // TODO:  implement custom protocol per https://docs.google.com/document/d/1ye0C7_kdnDCfcV8KsQCRafCDvrjRkiilqW9NlXF3M7Q/edit#
+    try {
+      await pipe(
+        stream,
+        async function (source) {
+          for await (const message of source) {
+            console.info(strProtocolName + `> ${String(message)}`)
+          }
         }
-
-        var s = await streamToString(stream.source)
-        //want to `console.log(s)` here, but need to use .then() on the async function
-      })
-      
-      // Send the CID data per /fil-retrievel/0.0.1 protocol
-      pipe([strRetrievedCIDBytes],stream.sink)
-    }()
-  )
+      )
+      await pipe([strRetrievedCIDBytes], stream.sink)
+    } catch (err) {
+      console.error('handler error: '+err)
+    }
+  }
+  selfNode.handle(strProtocolName, filRetrieveProtocolHandler)
 
   //
   // Start listening
@@ -226,38 +213,11 @@ async function run() {
   //
   // Publish on gossipsub any CIDs we want to retrieve ('-r' on CLI)
   //
-
-  // Example pubsub publish:  
-  //await selfNode.pubsub.publish(strTopic, "Here is a pubsub message")
-
-  // Publish the retrieval request CID in proper JSON format
   if (options.retrieve_cid != undefined) {
     sendPubsubMessage('request',options.retrieve_cid)
   }
 
-  // some invalid message traffic flow for debugging
-  var i = 0, exponent = 1
-  let timerId = setInterval(()=> {
-      if (i % Math.pow(2,exponent)==0) {
-        selfNode.pubsub.publish(strTopic, "This is "+selfNodeId.toB58String()+' saying hello on gossip (i='+i+',exponent='+exponent+')')
-        exponent++
-      }
-      i++
-  }, 5000)
-
-  //
-  // Wait for commands from the user
-  //
-  process.stdin.on('data', async (message) => {
-    // Strip newline and process
-    const command = message.slice(0, -1).toString()
-
-    if (command.toLowerCase()=="quit" || command=="q" || command=="Q") {
-      // Time to cleanup
-      clearInterval(timerId)
-      exit()
-    }
-  })
+  //////////////////////// -- end of main program -- ////////////////////////
 
   //
   // Helper functions
@@ -266,26 +226,20 @@ async function run() {
   // retrieve a CID over the custom protocol
   async function retrieveCidFromPeerAsync(selfNode, cidAvailable, multiAddrsArrrayOfPeerHavingCid) { // TODO:  size, total, paymentInterval, paymentIntervalIncrease, pricePerByte
     console.log(chalk.bgYellowBright("Starting retrieval of '"+cidAvailable+"'"))
-    // TODO:  don't just use the 0th mutliaddr in the array
+    // TODO:  don't just use the 0th mutliaddr in the array, try them individually
+    // until a connection is established
     const { stream } = await selfNode.dialProtocol(multiAddrsArrrayOfPeerHavingCid[0], strProtocolName)
     console.log(chalk.bgYellowBright('Dialed "'+multiAddrsArrrayOfPeerHavingCid[0]+'" with protocol: '+strProtocolName))
 
-    // TODO:  set up a payment channel, allocate a lane
-    // TODO:  add a wallet id to the global config to pay for CID retrievals
-    // TODO:  implement CreatePayment() - ultimately in pure js, can start with shelling out to a go binary that imports go-fil-markets
-    // TODO:  1. send initial payment voucher 
-    // TODO:  2. receive initial paymentInterval bytes
-    // TODO:  3. send next payment voucher
-    // TODO:  4. receive paymentInterval+paymentIntervalIncrease bytes
-    // TODO:  5. go to 3 until all data received
+    // TODO:  implement custom protocol per https://docs.google.com/document/d/1ye0C7_kdnDCfcV8KsQCRafCDvrjRkiilqW9NlXF3M7Q/edit#
     pipe(
-      // Source (send payment vouchers, expecting to receive bytes of your Data CID)
-      ['<payment voucher 1> ... <payment voucher 2> ...'], 
+      // Source (send payment vouchers, expecting to receive bytes of your data CID)
+      ['payment voucher 1... payment voucher 2...'], 
       stream,
       // Sink
       async function (source) {
         for await (const data of source) {
-          console.log(chalk.bgYellowBright('received data:', data.toString()))
+          console.log(chalk.bgYellowBright(strProtocolName + '> received data:', data.toString()))
         }
       }
     )

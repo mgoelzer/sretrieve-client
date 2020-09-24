@@ -66,7 +66,8 @@ async function run() {
     console.log("Bootstrap peer:" + peerInfo.toString())
   })
   b.start()
-  // -------------------------------------------------------
+ 
+ // -------------------------------------------------------
 
   const port = options.port
   const otherMultiaddr = options.multiaddr

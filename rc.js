@@ -18,6 +18,8 @@ const Bootstrap = require('libp2p-bootstrap')
 
 //
 // Command line arguments
+// Invocation example:  node rc.js -p 10333 \ 
+//    -m /ip4/192.168.1.23/tcp/5555/p2p/12D3KooWC7koLiCZRxtEtKCQLnjf8Rw1gUGHqE45Ts7BCFdmJNis
 //
 const options = yargs
  .usage("Usage: -m <other peer multiaddr> -p <number>")
@@ -28,7 +30,7 @@ const options = yargs
 //
 // Setup for gossipsub
 //
-const strTopic = '/fil/blocks'
+const strTopic = '/fil/blocks/testnetnet'
 
 //
 // Constant strings

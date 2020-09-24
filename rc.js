@@ -13,33 +13,22 @@ const yargs = require("yargs")
 const console = require('console')
 const chalk = require('chalk');
 const { Math, clearInterval } = require('ipfs-utils/src/globalthis')
-const Configuraton = require('./configuration.js')
-const LocalCids = require('./local-cids.js')
 const { option } = require('yargs')
-
-// TODO:
-// 1.  Implement the custom protocol to do retrieval from an other instance 
-// of this app per https://docs.google.com/document/d/1ye0C7_kdnDCfcV8KsQCRafCDvrjRkiilqW9NlXF3M7Q/edit#bookmark=id.z4n0gdjgl8pk
-// 2.  Add a wallet address + private key to config
-// 3.  Replace console.log() calls with better logging
-// 4.  Move into the browser w/ browser extention to handle disk file read/write
-
+const Bootstrap = require('libp2p-bootstrap')
 
 //
 // Command line arguments
 //
 const options = yargs
- .usage("Usage: -m <other peer multiaddr>")
- .option("m", { alias: "multiaddr", describe: "Multiaddr of another peer to dial", type: "string", demandOption: false })
+ .usage("Usage: -m <other peer multiaddr> -p <number>")
+ .option("m", { alias: "multiaddr", describe: "Multiaddr of Server peer to dial", type: "string", demandOption: false })
  .option("p", { alias: "port", describe: "Port to listen on", type: "string", demandOption: true })
- .option("d", { alias: "directory", describe: "Data+config directory for this node", type: "string", demandOption: true }) 
- .option("r", { alias: "retrieve_cid", describe: "CID you wish to retrieve", type: "string", demandOption: false }) 
  .argv
 
 //
 // Setup for gossipsub
 //
-const strTopic = 'fil-retrieve'
+const strTopic = '/fil/blocks'
 
 //
 // Constant strings
@@ -55,7 +44,27 @@ const strRetrievedCIDBytes = "...fake data......fake data......fake data......fa
 // Main program
 //
 async function run() {
-  var config = new Configuraton(options.directory)
+  //
+  // bootstrapping - manual approach
+  //
+  let bootstrapList = [
+    '/dns4/bootstrap-0.testnet.fildev.network/tcp/1347/ws',
+    '/dns4/bootstrap-1.testnet.fildev.network/tcp/1347/ws',
+    '/dns4/bootstrap-2.testnet.fildev.network/tcp/1347/ws',
+    '/dns4/bootstrap-4.testnet.fildev.network/tcp/1347/ws',
+    '/dns4/bootstrap-3.testnet.fildev.network/tcp/1347/ws',
+    '/dns4/bootstrap-5.testnet.fildev.network/tcp/1347/ws',
+  ]
+  const bootstrapOptions = {
+    list: bootstrapList,
+    interval: 5000 // ms, default is 10s
+  }
+  var b = new Bootstrap(bootstrapOptions)
+  b.on('peer', function (peerInfo) {
+    console.log("Bootstrap peer:" + peerInfo.toString())
+  })
+  b.start()
+  // -------------------------------------------------------
 
   const port = options.port
   const otherMultiaddr = options.multiaddr
@@ -68,11 +77,26 @@ async function run() {
       connEncryption: [NOISE],
       streamMuxer: [MPLEX],
       pubsub: Gossipsub,
+      peerDiscovery: [Bootstrap],
     },
     peerId: selfNodeId,
     addresses: {
       listen: ['/ip4/0.0.0.0/tcp/'+port]
     },
+    config: {
+      peerDiscovery: {
+        bootstrap: {
+          list: [
+            '/dns4/bootstrap-0.testnet.fildev.network/tcp/1347/ws',
+            '/dns4/bootstrap-1.testnet.fildev.network/tcp/1347/ws',
+            '/dns4/bootstrap-2.testnet.fildev.network/tcp/1347/ws',
+            '/dns4/bootstrap-4.testnet.fildev.network/tcp/1347/ws',
+            '/dns4/bootstrap-3.testnet.fildev.network/tcp/1347/ws',
+            '/dns4/bootstrap-5.testnet.fildev.network/tcp/1347/ws'
+          ]
+        }
+      }
+    }
   })
 
   //
@@ -148,6 +172,7 @@ async function run() {
         // silently ignore messages we cannot parse as JSON
       }
 
+/*
       //
       // Handle 'request' messages
       //
@@ -206,16 +231,18 @@ async function run() {
       } else if (obj && obj['messageType']) {
         console.log(chalk.redBright('gossip> ')+"Don't understand message type '"+obj['messageType']+"', ignoring")
       }
-      
+*/
 
   })
 
+/*
   //
   // Publish on gossipsub any CIDs we want to retrieve ('-r' on CLI)
   //
   if (options.retrieve_cid != undefined) {
     sendPubsubMessage('request',options.retrieve_cid)
   }
+*/
 
   //////////////////////// -- end of main program -- ////////////////////////
 

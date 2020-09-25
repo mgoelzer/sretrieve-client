@@ -25,7 +25,22 @@ const options = yargs
  .option("p", { alias: "port", describe: "Port to listen on", type: "string", demandOption: true })
  .argv
 
+//
+// Protocol constants for v0.1.0 and below
+//
 const strProtocolName = '/fil/simple-retrieve/0.0.1'
+const mandatoryPaymentIntervalInBytes         = 1048576  // 1 mb
+const mandatoryPaymentIntervalIncreaseInBytes = 10485760 // 10 mb
+const ReqRespInitialize            = 1
+const ReqRespConfirmTransferParams = 2
+const ReqRespTransfer              = 3
+const ReqRespVoucher               = 4
+const ReqRespCloseStream           = 5
+const ResponseCodeOk                               = 0
+const ResponseCodeGeneralFailure                   = 1
+const ResponseCodeInitializeNoCid                  = 101
+const ResponseCodeConfirmTransferParamsWrongParams = 201
+const ResponseCodeVoucherSigInvalid                = 301
 
 //
 // Main program
@@ -70,16 +85,6 @@ async function run() {
   var connectedPeers = new Set()
   hookPeerConnectDisconnectEvents(connectedPeers)
 
-  // DELETEABLE
-/*   //
-  // Log a message when we receive a connection
-  //
-  selfNode.connectionManager.on('peer:connect', (connection) => {
-    console.log('Now connected to peer:', connection.remotePeer.toB58String())
-  })
- */
-
-
   //
   // Start listening
   //
@@ -118,10 +123,28 @@ async function run() {
   //
   console.log('Dialing peer:', otherMultiaddr, ' on ', strProtocolName)
   const { stream } = await selfNode.dialProtocol(otherMultiaddr, [strProtocolName])
+  var intializeRequestAsJson = buildInitializeJson("bafykbzacebcklmjetdwu2gg5svpqllfs37p3nbcjzj2ciswpszajbnw2ddxzo","t2xxxxxxxxxx")
   await pipe(
-    ['hello there, amigo!'],
+    [intializeRequestAsJson],
     stream
   )
+
+  ////////////////////// -- Request Json Generators -- ///////////////////////
+
+  function buildInitializeJson(cid, pchAddr) {
+    // TODO:  check args
+
+    var obj = {
+      "type":"request",
+      "request":1,
+      "pchAddr":pchAddr,
+      "cid":cid,
+      "offset0":0,
+    }
+
+    var serializedObj = JSON.stringify(obj)
+    return serializedObj
+  }
 
   //////////////////////// -- end of main program -- ////////////////////////
 

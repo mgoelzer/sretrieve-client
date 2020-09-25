@@ -17,19 +17,14 @@ const { option } = require('yargs')
 const Bootstrap = require('libp2p-bootstrap')
 
 //
-// Command line arguments
-// Invocation example:  node rc.js -p 10333 \ 
-//    -m /ip4/192.168.1.23/tcp/5555/p2p/12D3KooWC7koLiCZRxtEtKCQLnjf8Rw1gUGHqE45Ts7BCFdmJNis
+// Command line arguments (run `node sretrieve-client.js --help` to see example usage)
 //
 const options = yargs
- .usage("Usage: -m <other peer multiaddr> -p <number>")
- .option("m", { alias: "multiaddr", describe: "Multiaddr of Server peer to dial", type: "string", demandOption: false })
+ .usage(chalk.blueBright("Usage: -m <other peer multiaddr> -p <number>") + chalk.green("\n\nExample: node sretrieve-client.js -m /ip4/192.168.1.23/tcp/5556/p2p/12D3KooWSEXpjM3CePSAfmjYDo4dfFUgcNW55pFK3wfukhT1FMtB -p 10333"))
+ .option("m", { alias: "multiaddr", describe: "Multiaddr of Server peer to dial", type: "string", demandOption: true })
  .option("p", { alias: "port", describe: "Port to listen on", type: "string", demandOption: true })
  .argv
 
-//
-// Constant strings
-//
 const strProtocolName = '/fil/simple-retrieve/0.0.1'
 
 //
@@ -75,12 +70,15 @@ async function run() {
   var connectedPeers = new Set()
   hookPeerConnectDisconnectEvents(connectedPeers)
 
-  //
+  // DELETEABLE
+/*   //
   // Log a message when we receive a connection
   //
   selfNode.connectionManager.on('peer:connect', (connection) => {
     console.log('Now connected to peer:', connection.remotePeer.toB58String())
   })
+ */
+
 
   //
   // Start listening
@@ -91,8 +89,9 @@ async function run() {
   selfNode.multiaddrs.forEach((ma) => {
     var multiAddrStr = ma.toString() + '/p2p/' + selfNodeId.toB58String()
     selfNodeMultiAddrStrs.push(multiAddrStr)
-    console.log(multiAddrStr)
+    console.log(`  ${multiAddrStr}`)
   })
+  console.log('\n')
 
   //
   // Stream handler for protocol /fil/simple-retrieve

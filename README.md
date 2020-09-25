@@ -20,8 +20,11 @@ Here's an example of a complete multiaddr with peer id::
 /ip4/192.168.1.23/tcp/5556/p2p/12D3KooWSEXpjM3CePSAfmjYDo4dfFUgcNW55pFK3wfukhT1FMtB
 ```
 
+5.  Run the client like this:
+
 ```
 node sretrieve-client.js -m (paste multiaddr from step 4) -p 10334
 ```
 
-
+---
+License: MIT

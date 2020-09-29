@@ -7,7 +7,7 @@ export const getOptions = () => {
   const { argv } = yargs
     .usage(
       chalk.blueBright`Usage: -m <other peer multiaddr> -p <number>` +
-        chalk.green`\n\nExample: node sretrieve-client.js -m ${exampleAddress} -p 10333`,
+        chalk.green`\n\nExample: npm run start -- -- -m ${exampleAddress} -p 10333`,
     )
     .option('m', {
       alias: 'multiaddr',

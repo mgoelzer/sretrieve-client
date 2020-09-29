@@ -5,10 +5,11 @@ import multiaddr from 'multiaddr'
 import { config } from './config'
 import { filRetrieveProtocolHandler } from './fil-retrieve-protocol-handler'
 import { getOptions } from './get-options'
+import { MessageTypeCodes } from './models/message-type-codes'
+import { handleClose, handleInitialize, handleTransfer, handleVoucher } from './services/handlers'
 import * as jsonStream from './services/json-stream'
 import * as libp2pNodes from './services/libp2p'
 import * as messages from './services/messages'
-import { createRequest } from './services/messages/create-request'
 
 const options = getOptions()
 
@@ -32,7 +33,7 @@ const start = async () => {
   })
   console.log('\n')
 
-  //
+  // Dial
   console.log('Dialing peer:', options.m, ' on ', config.protocolName)
   const listenMa = multiaddr(options.m)
   const { stream } = await selfNode.dialProtocol(listenMa, config.protocolName)
@@ -40,25 +41,52 @@ const start = async () => {
   console.log('connected!')
 
   const intializeRequestAsJson = messages.createInitialize(
-    'bafykbzacebcklmjetdwu2gg5svpqllfs37p3nbcjzj2ciswpszajbnw2ddxzo',
-    // 'test.jpg',
+    // 'bafykbzacebcklmjetdwu2gg5svpqllfs37p3nbcjzj2ciswpszajbnw2ddxzo',
+    'test.jpg',
     't2xxxxxxxxxx',
   )
 
   const writeStream = pushable()
 
+  console.log('----->> sending message:', intializeRequestAsJson)
   writeStream.push(intializeRequestAsJson)
 
   await pipe(writeStream, jsonStream.stringify, stream, jsonStream.parse, async (source) => {
     for await (const message of source) {
-      console.log('message', message)
+      const messageToPrint = Object.keys(message).reduce((a, b) => {
+        a[b] = message[b]
 
-      if (message.responseCode === 0) {
-        const request = createRequest()
-        writeStream.push(request)
+        if (a[b] && a[b].length && a[b].length > 50) {
+          a[b] = a[b].slice(0, 50) + '...'
+        }
+
+        return a
+      }, {})
+      console.log('<<----- received message from the server:', messageToPrint)
+
+      switch (message.response) {
+        case MessageTypeCodes.ReqRespInitialize:
+          handleInitialize(writeStream, message) // TODO: impl
+          break
+
+        case MessageTypeCodes.ReqRespTransfer:
+          handleTransfer(writeStream, message) // TODO: impl
+          break
+
+        case MessageTypeCodes.ReqRespVoucher:
+          handleVoucher(writeStream, message) // TODO: impl
+          break
+
+        case MessageTypeCodes.ReqRespCloseStream:
+          handleClose(writeStream, message) // TODO: impl
+          break
       }
     }
+    console.log('stream ended')
   })
+
+  console.log('disconnected!')
+  await selfNode.stop()
 }
 
 start()

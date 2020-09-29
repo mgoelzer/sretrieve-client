@@ -1,3 +1,4 @@
+import { config } from '../../config'
 import { MessageTypeCodes } from '../../models/message-type-codes'
 
 /**
@@ -24,7 +25,7 @@ export const createRequest = () => {
   return {
     type: 'request',
     request: MessageTypeCodes.ReqRespTransfer,
-    N: 1048576,
+    n: config.mandatoryPaymentIntervalInBytes,
     offset: 0,
   }
 }

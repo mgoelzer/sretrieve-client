@@ -40,8 +40,8 @@ const start = async () => {
   console.log('connected!')
 
   const intializeRequestAsJson = messages.createInitialize(
-    // 'bafykbzacebcklmjetdwu2gg5svpqllfs37p3nbcjzj2ciswpszajbnw2ddxzo',
-    'test.jpg',
+    'bafykbzacebcklmjetdwu2gg5svpqllfs37p3nbcjzj2ciswpszajbnw2ddxzo',
+    // 'test.jpg',
     't2xxxxxxxxxx',
   )
 
@@ -59,8 +59,6 @@ const start = async () => {
       }
     }
   })
-
-  // await pipe([intializeRequestAsJson], stream)
 }
 
 start()

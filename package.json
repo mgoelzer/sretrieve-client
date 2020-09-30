@@ -8,6 +8,7 @@
     "chalk": "^4.1.0",
     "exit": "^0.1.2",
     "it-pipe": "^1.1.0",
+    "it-pushable": "^1.4.0",
     "libp2p": "^0.29.0",
     "libp2p-bootstrap": "^0.12.0",
     "libp2p-gossipsub": "^0.6.0",
@@ -16,12 +17,27 @@
     "libp2p-tcp": "^0.15.1",
     "libp2p-websockets": "^0.14.0",
     "multiaddr": "^8.0.0",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.3",
     "yargs": "^13.2.4"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@types/yargs": "^15.0.7",
+    "husky": "^4.3.0",
+    "lint-staged": "^10.4.0",
+    "prettier": "^2.1.2"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "ts-node src/index.ts"
   },
   "author": "Mike Goelzer",
-  "license": "MIT"
+  "license": "MIT",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,css,md}": "prettier --write"
+  }
 }

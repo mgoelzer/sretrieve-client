@@ -1,3 +1,4 @@
+import { write } from 'fs'
 import { pipe } from 'it-pipe'
 import pushable from 'it-pushable'
 import multiaddr from 'multiaddr'
@@ -6,12 +7,27 @@ import { config } from './config'
 import { filRetrieveProtocolHandler } from './fil-retrieve-protocol-handler'
 import { getOptions } from './get-options'
 import { MessageTypeCodes } from './models/message-type-codes'
-import { handleClose, handleInitialize, handleTransfer, handleVoucher } from './services/handlers'
 import * as jsonStream from './services/json-stream'
 import * as libp2pNodes from './services/libp2p'
 import * as messages from './services/messages'
+import { createClose } from './services/messages/create-close'
+import { createRequest } from './services/messages/create-request'
+import { createVoucher } from './services/messages/create-voucher'
+import { voucherGenerator } from './services/protocol/voucher-generator'
 
 const options = getOptions()
+
+const sendVoucher = async (voucherGen, writeStream) => {
+  const { value: voucherParams } = await voucherGen.next()
+
+  if (voucherParams) {
+    const voucher = createVoucher(voucherParams.sv, voucherParams.signedVoucher)
+
+    writeStream.push(voucher)
+  } else {
+    writeStream.push(createClose())
+  }
+}
 
 const start = async () => {
   const selfNodeId = await libp2pNodes.createNodeId()
@@ -41,10 +57,18 @@ const start = async () => {
   console.log('connected!')
 
   const intializeRequestAsJson = messages.createInitialize(
-    // 'bafykbzacebcklmjetdwu2gg5svpqllfs37p3nbcjzj2ciswpszajbnw2ddxzo',
-    'test.jpg',
+    'bafykbzacebcklmjetdwu2gg5svpqllfs37p3nbcjzj2ciswpszajbnw2ddxzo',
+    // 'test.jpg',
     't2xxxxxxxxxx',
   )
+
+  const responses = {
+    initialize: {},
+    transfer: {},
+    voucher: {},
+    closeStream: {},
+  }
+  let voucherGen: ReturnType<typeof voucherGenerator>
 
   const writeStream = pushable()
 
@@ -66,19 +90,33 @@ const start = async () => {
 
       switch (message.response) {
         case MessageTypeCodes.ReqRespInitialize:
-          handleInitialize(writeStream, message) // TODO: impl
+          responses.initialize = message
+
+          voucherGen = voucherGenerator(message.totalBytes)
+
+          writeStream.push(createRequest())
+
           break
 
         case MessageTypeCodes.ReqRespTransfer:
-          handleTransfer(writeStream, message) // TODO: impl
+          responses.transfer = message
+
+          sendVoucher(voucherGen, writeStream)
+
           break
 
         case MessageTypeCodes.ReqRespVoucher:
-          handleVoucher(writeStream, message) // TODO: impl
+          responses.voucher = message
+
+          sendVoucher(voucherGen, writeStream)
+
           break
 
         case MessageTypeCodes.ReqRespCloseStream:
-          handleClose(writeStream, message) // TODO: impl
+          responses.closeStream = message
+
+          writeStream.end()
+
           break
       }
     }

@@ -19,14 +19,12 @@ import { MessageTypeCodes } from '../../models/message-type-codes'
  *                  ${ResponseCodeVoucherSigInvalid:int}
  * "errorMessage":  "Error: signature invalid blah blah blah...",
  */
-export const createVoucher = () => {
+export const createVoucher = (amountInAttoFil, sigBytes) => {
   return {
     type: 'request',
     request: MessageTypeCodes.ReqRespVoucher,
-    amountInAttoFil: 488281, // TODO: get
+    amountInAttoFil,
     sigType: 1,
-    // https://github.com/Zondax/filecoin-signing-tools/blob/master/examples/wasm_node/payment_channel.js#L188
-    // https://github.com/Zondax/filecoin-signing-tools/blob/master/examples/wasm_node/payment_channel.js#L236
-    sigBytes: 'L8yHseuD/d9pNzhtf...Hj0Oli6UI+iMUMw==', // TODO: sign
+    sigBytes,
   }
 }

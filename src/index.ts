@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js'
 import { pipe } from 'it-pipe'
 import pushable from 'it-pushable'
 import multiaddr from 'multiaddr'
@@ -5,6 +6,7 @@ import multiaddr from 'multiaddr'
 import { config } from './config'
 import { getOptions } from './get-options'
 import { MessageTypeCodes } from './models/message-type-codes'
+import { BaseResponse, InitializeResponse, RequestResponse, ResponseType } from './models/response'
 import * as jsonStream from './services/json-stream'
 import * as libp2pNodes from './services/libp2p'
 import * as messages from './services/messages'
@@ -58,9 +60,9 @@ const start = async () => {
   )
 
   const responses = {
-    initialize: {},
-    transfer: {},
-    voucher: {},
+    initialize: {} as InitializeResponse,
+    transfer: {} as RequestResponse,
+    voucher: {} as BaseResponse,
     closeStream: {},
   }
   let voucherGen: ReturnType<typeof voucherGenerator>
@@ -70,53 +72,60 @@ const start = async () => {
   console.log('----->> sending message:', intializeRequestAsJson)
   writeStream.push(intializeRequestAsJson)
 
-  await pipe(writeStream, jsonStream.stringify, stream, jsonStream.parse, async (source) => {
-    for await (const message of source) {
-      const messageToPrint = Object.keys(message).reduce((a, b) => {
-        a[b] = message[b]
+  await pipe(
+    writeStream,
+    jsonStream.stringify,
+    stream,
+    jsonStream.parse,
+    async (source: AsyncGenerator<ResponseType>) => {
+      for await (const message of source) {
+        const messageToPrint = Object.keys(message).reduce((a, b) => {
+          a[b] = message[b]
 
-        if (a[b] && a[b].length && a[b].length > 50) {
-          a[b] = a[b].slice(0, 50) + '...'
+          if (a[b] && a[b].length && a[b].length > 50) {
+            a[b] = a[b].slice(0, 50) + '...'
+          }
+
+          return a
+        }, {})
+        console.log('<<----- received message from the server:', messageToPrint)
+
+        switch (message.response) {
+          case MessageTypeCodes.ReqRespInitialize:
+            responses.initialize = message as InitializeResponse
+
+            voucherGen = voucherGenerator(new BigNumber(responses.initialize.totalBytes))
+
+            writeStream.push(createRequest())
+            console.log('----->> sending message:', createRequest())
+
+            break
+
+          case MessageTypeCodes.ReqRespTransfer:
+            responses.transfer = message as RequestResponse
+
+            sendVoucher(voucherGen, writeStream)
+
+            break
+
+          case MessageTypeCodes.ReqRespVoucher:
+            responses.voucher = message
+
+            sendVoucher(voucherGen, writeStream)
+
+            break
+
+          case MessageTypeCodes.ReqRespCloseStream:
+            responses.closeStream = message
+
+            writeStream.end()
+
+            break
         }
-
-        return a
-      }, {})
-      console.log('<<----- received message from the server:', messageToPrint)
-
-      switch (message.response) {
-        case MessageTypeCodes.ReqRespInitialize:
-          responses.initialize = message
-
-          voucherGen = voucherGenerator(message.totalBytes)
-
-          writeStream.push(createRequest())
-
-          break
-
-        case MessageTypeCodes.ReqRespTransfer:
-          responses.transfer = message
-
-          sendVoucher(voucherGen, writeStream)
-
-          break
-
-        case MessageTypeCodes.ReqRespVoucher:
-          responses.voucher = message
-
-          sendVoucher(voucherGen, writeStream)
-
-          break
-
-        case MessageTypeCodes.ReqRespCloseStream:
-          responses.closeStream = message
-
-          writeStream.end()
-
-          break
       }
-    }
-    console.log('stream ended')
-  })
+      console.log('stream ended')
+    },
+  )
 
   console.log('disconnected!')
   await selfNode.stop()

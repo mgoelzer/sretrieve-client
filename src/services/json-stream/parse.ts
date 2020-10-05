@@ -10,7 +10,9 @@ export const parse = (source) => {
       }
 
       try {
-        yield JSON.parse(bufferedData.toString())
+        const objStr = bufferedData.toString().replace(/\0$/, '')
+        yield JSON.parse(objStr)
+
         bufferedData = undefined
       } catch (error) {
         // wait for more data until we can parse the json

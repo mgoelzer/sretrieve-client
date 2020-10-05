@@ -1,10 +1,8 @@
-import { write } from 'fs'
 import { pipe } from 'it-pipe'
 import pushable from 'it-pushable'
 import multiaddr from 'multiaddr'
 
 import { config } from './config'
-import { filRetrieveProtocolHandler } from './fil-retrieve-protocol-handler'
 import { getOptions } from './get-options'
 import { MessageTypeCodes } from './models/message-type-codes'
 import * as jsonStream from './services/json-stream'
@@ -31,9 +29,7 @@ const sendVoucher = async (voucherGen, writeStream) => {
 
 const start = async () => {
   const selfNodeId = await libp2pNodes.createNodeId()
-
   const selfNode = await libp2pNodes.createNode(selfNodeId, options.p)
-  selfNode.handle(config.protocolName, filRetrieveProtocolHandler)
 
   const connectedPeers = new Set()
   libp2pNodes.hookPeerConnectDisconnectEvents(selfNode, connectedPeers)
@@ -58,7 +54,6 @@ const start = async () => {
 
   const intializeRequestAsJson = messages.createInitialize(
     'bafykbzacebcklmjetdwu2gg5svpqllfs37p3nbcjzj2ciswpszajbnw2ddxzo',
-    // 'test.jpg',
     't2xxxxxxxxxx',
   )
 

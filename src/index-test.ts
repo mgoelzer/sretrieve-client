@@ -1,5 +1,6 @@
 /**
  * Temporary file to help debug the server lock issue
+ * Use index.ts instead
  */
 import { pipe } from 'it-pipe'
 import pushable from 'it-pushable'
@@ -41,18 +42,24 @@ const start = async () => {
   // send to server
   pipe(writeStream, stream.sink)
 
+  let oo = 0
   // get from server
   pipe(stream.source, async (source) => {
     console.log('[pipe::source]: reading response from server')
 
     for await (const message of source) {
-      console.log('<<----- received message from the server:', message)
+      console.log('<<----- received message from the server:', message.toString())
+
+      if (!oo) {
+        writeStream.push(JSON.stringify(intializeRequestAsJson) + String.fromCharCode(0))
+        oo++
+      }
     }
     console.log('stream ended')
   })
 
   console.log('----->> sending message:', intializeRequestAsJson)
-  writeStream.push(JSON.stringify(intializeRequestAsJson))
+  writeStream.push(JSON.stringify(intializeRequestAsJson) + String.fromCharCode(0))
 
   console.log('done')
 }
